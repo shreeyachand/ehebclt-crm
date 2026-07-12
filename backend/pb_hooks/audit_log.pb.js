@@ -2,7 +2,7 @@
 onRecordCreateRequest(function (e) {
   var col = "";
   try { col = e.collection ? String(e.collection.name || e.collection()) : ""; } catch (_) {}
-  if (!col || col === "_audits") { e.next(); return; }
+  if (!col || col.startsWith("_")) { e.next(); return; }
 
   var actorEmail = "";
   var actorId = "";
@@ -11,15 +11,27 @@ onRecordCreateRequest(function (e) {
     try { actorId = String(e.auth.id || ""); } catch (_) {}
   }
 
-  // Pre-generate record ID and stash actor info for after-success hook
   var rec = e.record;
-  var idChars = "abcdefghijklmnopqrstuvwxyz0123456789";
-  var rid = "";
-  for (var ci = 0; ci < 15; ci++) {
-    rid += idChars.charAt(Math.floor(Math.random() * idChars.length));
+  var rid = String(rec.id || "");
+  if (!rid) {
+    rid = $security.randomStringWithAlphabet(15, "abcdefghijklmnopqrstuvwxyz0123456789");
+    rec.set("id", rid);
   }
-  rec.set("id", rid);
   $app.store().set("_act_" + rid, { email: actorEmail, id: actorId, col: col });
+
+  e.next();
+});
+
+onRecordAfterCreateError(function (e) {
+  var col = "";
+  try { col = e.collection ? String(e.collection.name || e.collection()) : ""; } catch (_) {}
+  if (!col || col.startsWith("_")) { e.next(); return; }
+
+  var rid = "";
+  try { rid = String(e.record.id || ""); } catch (_) {}
+  if (!rid) { e.next(); return; }
+
+  try { $app.store().remove("_act_" + rid); } catch (_) {}
 
   e.next();
 });
@@ -33,7 +45,7 @@ onRecordAfterCreateSuccess(function (e) {
   var stashed = null;
   try { stashed = $app.store().get("_act_" + rid); } catch (_) {}
   if (!stashed) { e.next(); return; }
-  try { $app.store().set("_act_" + rid, null); } catch (_) {}
+  try { $app.store().remove("_act_" + rid); } catch (_) {}
 
   var actorEmail = String(stashed.email || "");
   var actorId = String(stashed.id || "");
@@ -80,14 +92,18 @@ onRecordAfterCreateSuccess(function (e) {
 onRecordUpdateRequest(function (e) {
   var col = "";
   try { col = e.collection ? String(e.collection.name || e.collection()) : ""; } catch (_) {}
-  if (!col || col === "_audits") { e.next(); return; }
+  if (!col || col.startsWith("_")) { e.next(); return; }
 
   var rec = e.record;
+  if (!rec) { e.next(); return; }
+  var rid = String(rec.id || "");
+  if (!rid) { e.next(); return; }
+
   var oldRec = null;
-  try { oldRec = rec ? rec.original() : null; } catch (_) {}
+  try { oldRec = rec.original(); } catch (_) {}
 
   var diff = {};
-  if (rec && oldRec) {
+  if (oldRec) {
     try {
       var coll = rec.collection();
       if (coll && coll.fields) {
@@ -116,15 +132,53 @@ onRecordUpdateRequest(function (e) {
     try { actorId = String(e.auth.id || ""); } catch (_) {}
   }
 
+  $app.store().set("_upd_" + rid, {
+    email: actorEmail,
+    id: actorId,
+    col: col,
+    diff: diff
+  });
+
+  e.next();
+});
+
+onRecordAfterUpdateError(function (e) {
+  var col = "";
+  try { col = e.collection ? String(e.collection.name || e.collection()) : ""; } catch (_) {}
+  if (!col || col.startsWith("_")) { e.next(); return; }
+
+  var rid = "";
+  try { rid = String(e.record.id || ""); } catch (_) {}
+  if (!rid) { e.next(); return; }
+
+  try { $app.store().remove("_upd_" + rid); } catch (_) {}
+
+  e.next();
+});
+
+onRecordAfterUpdateSuccess(function (e) {
+  var rec = e.record;
+  if (!rec) { e.next(); return; }
+  var rid = String(rec.id || "");
+  if (!rid) { e.next(); return; }
+
+  var stashed = null;
+  try { stashed = $app.store().get("_upd_" + rid); } catch (_) {}
+  if (!stashed) { e.next(); return; }
+  try { $app.store().remove("_upd_" + rid); } catch (_) {}
+
+  var diff = stashed.diff;
+  if (!diff || Object.keys(diff).length === 0) { e.next(); return; }
+
   try {
     var auditsColl = $app.findCollectionByNameOrId("_audits");
     var auditRec = new Record(auditsColl);
     auditRec.set("action", "update");
-    auditRec.set("collection_name", col);
-    auditRec.set("record_id", rec ? String(rec.id || "") : "");
+    auditRec.set("collection_name", String(stashed.col || ""));
+    auditRec.set("record_id", rid);
     auditRec.set("changes", JSON.stringify(diff));
-    auditRec.set("actor_email", actorEmail);
-    auditRec.set("actor_id", actorId);
+    auditRec.set("actor_email", String(stashed.email || ""));
+    auditRec.set("actor_id", String(stashed.id || ""));
     auditRec.set("created_at", new Date().toISOString());
     var form = new RecordUpsertForm($app, auditRec);
     form.submit();
@@ -139,28 +193,30 @@ onRecordUpdateRequest(function (e) {
 onRecordDeleteRequest(function (e) {
   var col = "";
   try { col = e.collection ? String(e.collection.name || e.collection()) : ""; } catch (_) {}
-  if (!col || col === "_audits") { e.next(); return; }
+  if (!col || col.startsWith("_")) { e.next(); return; }
 
   var rec = e.record;
+  if (!rec) { e.next(); return; }
+  var rid = String(rec.id || "");
+  if (!rid) { e.next(); return; }
+
   var deleted = {};
-  if (rec) {
-    try {
-      var coll = rec.collection();
-      if (coll && coll.fields) {
-        var names = coll.fields.fieldNames();
-        for (var i = 0; i < names.length; i++) {
-          var fn = names[i];
-          if (fn === "id" || fn === "created" || fn === "updated") continue;
-          try {
-            var val = rec.get(fn);
-            if (val !== null && val !== undefined && val !== "") {
-              deleted[fn] = String(val);
-            }
-          } catch (_) {}
-        }
+  try {
+    var coll = rec.collection();
+    if (coll && coll.fields) {
+      var names = coll.fields.fieldNames();
+      for (var i = 0; i < names.length; i++) {
+        var fn = names[i];
+        if (fn === "id" || fn === "created" || fn === "updated") continue;
+        try {
+          var val = rec.get(fn);
+          if (val !== null && val !== undefined && val !== "") {
+            deleted[fn] = String(val);
+          }
+        } catch (_) {}
       }
-    } catch (_) {}
-  }
+    }
+  } catch (_) {}
 
   var actorEmail = "";
   var actorId = "";
@@ -169,15 +225,50 @@ onRecordDeleteRequest(function (e) {
     try { actorId = String(e.auth.id || ""); } catch (_) {}
   }
 
+  $app.store().set("_del_" + rid, {
+    email: actorEmail,
+    id: actorId,
+    col: col,
+    deleted: deleted
+  });
+
+  e.next();
+});
+
+onRecordAfterDeleteError(function (e) {
+  var col = "";
+  try { col = e.collection ? String(e.collection.name || e.collection()) : ""; } catch (_) {}
+  if (!col || col.startsWith("_")) { e.next(); return; }
+
+  var rid = "";
+  try { rid = String(e.record.id || ""); } catch (_) {}
+  if (!rid) { e.next(); return; }
+
+  try { $app.store().remove("_del_" + rid); } catch (_) {}
+
+  e.next();
+});
+
+onRecordAfterDeleteSuccess(function (e) {
+  var rec = e.record;
+  if (!rec) { e.next(); return; }
+  var rid = String(rec.id || "");
+  if (!rid) { e.next(); return; }
+
+  var stashed = null;
+  try { stashed = $app.store().get("_del_" + rid); } catch (_) {}
+  if (!stashed) { e.next(); return; }
+  try { $app.store().remove("_del_" + rid); } catch (_) {}
+
   try {
     var auditsColl = $app.findCollectionByNameOrId("_audits");
     var auditRec = new Record(auditsColl);
     auditRec.set("action", "delete");
-    auditRec.set("collection_name", col);
-    auditRec.set("record_id", rec ? String(rec.id || "") : "");
-    auditRec.set("changes", JSON.stringify(deleted));
-    auditRec.set("actor_email", actorEmail);
-    auditRec.set("actor_id", actorId);
+    auditRec.set("collection_name", String(stashed.col || ""));
+    auditRec.set("record_id", rid);
+    auditRec.set("changes", JSON.stringify(stashed.deleted || {}));
+    auditRec.set("actor_email", String(stashed.email || ""));
+    auditRec.set("actor_id", String(stashed.id || ""));
     auditRec.set("created_at", new Date().toISOString());
     var form = new RecordUpsertForm($app, auditRec);
     form.submit();
