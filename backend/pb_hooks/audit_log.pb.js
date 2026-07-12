@@ -62,7 +62,7 @@ onRecordAfterCreateSuccess(function (e) {
         try {
           var val = rec.get(fn);
           if (val !== null && val !== undefined && val !== "") {
-            created[fn] = String(val);
+            created[fn] = val;
           }
         } catch (_) {}
       }
@@ -75,7 +75,7 @@ onRecordAfterCreateSuccess(function (e) {
     auditRec.set("action", "create");
     auditRec.set("collection_name", col);
     auditRec.set("record_id", rid);
-    auditRec.set("changes", JSON.stringify(created));
+    auditRec.set("changes", created);
     auditRec.set("actor_email", actorEmail);
     auditRec.set("actor_id", actorId);
     auditRec.set("created_at", new Date().toISOString());
@@ -115,7 +115,7 @@ onRecordUpdateRequest(function (e) {
             var oldVal = oldRec.get(fn);
             var newVal = rec.get(fn);
             if (JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
-              diff[fn] = { old: String(oldVal !== null && oldVal !== undefined ? oldVal : ""), new: String(newVal !== null && newVal !== undefined ? newVal : "") };
+              diff[fn] = { old: (oldVal !== null && oldVal !== undefined ? oldVal : ""), new: (newVal !== null && newVal !== undefined ? newVal : "") };
             }
           } catch (_) {}
         }
@@ -176,7 +176,7 @@ onRecordAfterUpdateSuccess(function (e) {
     auditRec.set("action", "update");
     auditRec.set("collection_name", String(stashed.col || ""));
     auditRec.set("record_id", rid);
-    auditRec.set("changes", JSON.stringify(diff));
+    auditRec.set("changes", diff);
     auditRec.set("actor_email", String(stashed.email || ""));
     auditRec.set("actor_id", String(stashed.id || ""));
     auditRec.set("created_at", new Date().toISOString());
@@ -211,7 +211,7 @@ onRecordDeleteRequest(function (e) {
         try {
           var val = rec.get(fn);
           if (val !== null && val !== undefined && val !== "") {
-            deleted[fn] = String(val);
+            deleted[fn] = val;
           }
         } catch (_) {}
       }
@@ -266,7 +266,7 @@ onRecordAfterDeleteSuccess(function (e) {
     auditRec.set("action", "delete");
     auditRec.set("collection_name", String(stashed.col || ""));
     auditRec.set("record_id", rid);
-    auditRec.set("changes", JSON.stringify(stashed.deleted || {}));
+    auditRec.set("changes", stashed.deleted || {});
     auditRec.set("actor_email", String(stashed.email || ""));
     auditRec.set("actor_id", String(stashed.id || ""));
     auditRec.set("created_at", new Date().toISOString());
