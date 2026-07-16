@@ -1,0 +1,16 @@
+:root {
+  --mint: #D3F8E2;
+  --white: #ffffff;
+  --blue: #A9DEF9;
+  --red: #ff6b6b;
+  --yellow: #ffd93d;
+  --green: #6bcf6b;
+  --radius: 12px;
+}
+
+
+body {
+  background-color: var(--mint);
+  margin: 0;
+  font-family: sans-serif;
+}
