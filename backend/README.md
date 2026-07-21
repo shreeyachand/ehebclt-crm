@@ -19,6 +19,8 @@ Spin up the PocketBase container using Docker Compose:
 docker compose up -d
 ```
 
+By default, this builds a local PocketBase image from the official release binary (`POCKETBASE_VERSION=0.31.0`), and you can override the version with an environment variable when needed.
+
 ### 3. Access the Dashboard & Create an Admin
 Frontend API Endpoint: http://localhost:8090
 

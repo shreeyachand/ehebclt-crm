@@ -1,6 +1,10 @@
 services:
   pocketbase:
-    image: ghcr.io/muchobien/pocketbase:latest # or whatever image you are using
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        POCKETBASE_VERSION: ${POCKETBASE_VERSION:-0.31.0}
     container_name: pocketbase
     ports:
       - "8090:8090"
