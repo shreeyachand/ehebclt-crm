@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document OCR Processor — ehebclt CRM</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>Document OCR Processor</h1>
+      <p class="subtitle">Upload scanned documents → auto-detect collection → extract fields → verify → save to PocketBase</p>
+    </header>
+
+    <!-- Config Section -->
+    <section id="config-section" class="card">
+      <h2>Configuration</h2>
+      <div class="form-row">
+        <label for="pb-url">PocketBase URL</label>
+        <input type="url" id="pb-url" value="http://localhost:8090" placeholder="http://localhost:8090">
+      </div>
+      <div class="form-row">
+        <label for="pb-email">Admin Email</label>
+        <input type="email" id="pb-email" placeholder="admin@example.com">
+      </div>
+      <div class="form-row">
+        <label for="pb-password">Admin Password</label>
+        <input type="password" id="pb-password" placeholder="••••••••">
+      </div>
+      <div class="form-row">
+        <label for="ocr-url">OCR Service URL</label>
+        <input type="url" id="ocr-url" value="http://localhost:8000" placeholder="http://localhost:8000">
+      </div>
+      <button id="connect-btn" class="btn btn-primary">Connect</button>
+      <p id="config-status" class="status-msg"></p>
+    </section>
+
+    <!-- Upload Section -->
+    <section id="upload-section" class="card" style="display:none">
+      <h2>Upload Document</h2>
+      <div class="form-row">
+        <label>Select collection (optional — skip for auto-detect)</label>
+        <select id="collection-override">
+          <option value="">— Auto-detect —</option>
+        </select>
+      </div>
+      <div class="upload-zone" id="upload-zone">
+        <p>Drag & drop a PDF or image here, or click to browse</p>
+        <input type="file" id="file-input" accept=".pdf,.jpg,.jpeg,.png,.tiff,.tif,.bmp" hidden>
+      </div>
+      <p id="file-info"></p>
+      <button id="process-btn" class="btn btn-primary" disabled>Process Document</button>
+      <p id="upload-status" class="status-msg"></p>
+    </section>
+
+    <!-- Processing Section -->
+    <section id="processing-section" class="card" style="display:none">
+      <h2>Processing</h2>
+      <div class="progress-steps">
+        <div class="step" id="step-ocr">OCR extraction <span class="step-status"></span></div>
+        <div class="step" id="step-detect">Collection detection <span class="step-status"></span></div>
+        <div class="step" id="step-extract">Field extraction <span class="step-status"></span></div>
+        <div class="step" id="step-ground">Confidence check <span class="step-status"></span></div>
+      </div>
+    </section>
+
+    <!-- Review Section -->
+    <section id="review-section" class="card" style="display:none">
+      <div class="review-header">
+        <h2>Review & Confirm</h2>
+        <span class="badge" id="detection-badge"></span>
+      </div>
+
+      <div class="review-layout">
+        <div class="review-document">
+          <h3>Original Document</h3>
+          <div id="document-preview"></div>
+          <details>
+            <summary>Raw OCR Text</summary>
+            <pre id="ocr-text-display"></pre>
+          </details>
+        </div>
+
+        <div class="review-form">
+          <h3>Extracted Fields</h3>
+          <p class="form-instruction">Review and edit the extracted values before saving. <span class="flagged-hint">Highlighted fields</span> need attention.</p>
+          <form id="review-form"></form>
+
+          <div class="review-actions">
+            <button id="reject-btn" class="btn btn-secondary">Reject</button>
+            <button id="confirm-btn" class="btn btn-primary">Confirm & Save</button>
+          </div>
+          <p id="save-status" class="status-msg"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Error Section -->
+    <section id="error-section" class="card error-card" style="display:none">
+      <h2>Processing Error</h2>
+      <p id="error-message"></p>
+      <button id="error-back-btn" class="btn btn-secondary">Back to Upload</button>
+    </section>
+
+    <!-- Success Section -->
+    <section id="success-section" class="card success-card" style="display:none">
+      <h2>Record Saved Successfully</h2>
+      <p id="success-message"></p>
+      <div class="review-actions">
+        <button id="success-another-btn" class="btn btn-primary">Process Another Document</button>
+        <a id="success-pb-link" class="btn btn-secondary" target="_blank">View in PocketBase</a>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
