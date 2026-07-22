@@ -37,7 +37,7 @@ The container runs with a defense-in-depth posture:
 - **No Linux capabilities** — `cap_drop: ALL` removes every capability.
 - **No new privileges** — `no-new-privileges:true` blocks privilege escalation via `setuid`/`setgid` binaries.
 - **Non-root user** — PocketBase runs as the `pocketbase` user, not root, limiting the blast radius of a container breakout.
-- **Custom seccomp profile** — `seccomp.json` blocks ~44 dangerous syscalls (e.g. `mount`, `ptrace`, `bpf`, `unshare`). It can be hardened as needed. 
+- **TODO: custom seccomp profile** — add a seccomp profile to block dangerous syscalls like `mount`, `ptrace`, `bpf`, `unshare` (see `seccomp.json` branch history for a starting point). It can be hardened as needed. 
 - **Internal network** — the service is isolated on a bridge network with no external access.
 
 ### 4. Database Migrations
