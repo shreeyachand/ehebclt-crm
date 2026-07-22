@@ -18,7 +18,7 @@ services:
     read_only: true
     security_opt:
       - no-new-privileges:true
-      - seccomp=default
+      - seccomp=./seccomp.json
     networks:
       - pocketbase_internal
     command: serve --http=0.0.0.0:8090 --dir=/pb_data --migrationsDir=/pb_migrations --hooksDir=/pb_hooks
@@ -26,4 +26,3 @@ services:
 
 networks:
   pocketbase_internal:
-    internal: true
