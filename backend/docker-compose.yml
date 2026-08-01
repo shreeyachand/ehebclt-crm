@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        POCKETBASE_VERSION: ${POCKETBASE_VERSION:-0.31.0}
+        POCKETBASE_VERSION: ${POCKETBASE_VERSION:-0.39.8}
     container_name: pocketbase
     cap_drop:
       - ALL

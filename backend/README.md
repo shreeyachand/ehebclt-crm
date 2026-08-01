@@ -19,7 +19,7 @@ Spin up the PocketBase container using Docker Compose:
 docker compose up -d
 ```
 
-By default, this builds a local PocketBase image from the official release binary (`POCKETBASE_VERSION=0.31.0`), and you can override the version with an environment variable when needed.
+By default, this builds a local PocketBase image from the official release binary (`POCKETBASE_VERSION=0.39.8`), and you can override the version with an environment variable when needed.
 
 ### 3. Access the Dashboard & Create an Admin
 Frontend API Endpoint: http://localhost:8090
@@ -27,6 +27,9 @@ Frontend API Endpoint: http://localhost:8090
 Admin Dashboard: http://localhost:8090/_/
 
 >💡 First Time Logging In? Because the sample database has been scrubbed of admin credentials, navigating to the Admin Dashboard link above will immediately prompt you to create your own local superuser account.
+
+### 3. Backups
+Backups, restores, and imports are managed from the Dashboard (Settings → Backups). The download is verified against PocketBase's published SHA-256 checksums during the image build, and backups are written to `pb_data/backups`, which lives on the writable data volume — no extra container writes are needed, so the read-only rootfs does not block them.
 
 ## Security
 
