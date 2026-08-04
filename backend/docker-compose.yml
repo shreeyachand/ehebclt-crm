@@ -1,13 +1,27 @@
 services:
   pocketbase:
-    image: ghcr.io/muchobien/pocketbase:latest # or whatever image you are using
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        POCKETBASE_VERSION: ${POCKETBASE_VERSION:-0.39.8}
     container_name: pocketbase
+    cap_drop:
+      - ALL
     ports:
       - "8090:8090"
     volumes:
       # This maps the folders to your local computer:
       - ./pb_data:/pb_data
-      - ./pb_migrations:/pb_migrations
-      - ./pb_hooks:/pb_hooks
+      - ./pb_migrations:/pb_migrations:ro
+      - ./pb_hooks:/pb_hooks:ro
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - pocketbase_internal
     command: serve --http=0.0.0.0:8090 --dir=/pb_data --migrationsDir=/pb_migrations --hooksDir=/pb_hooks
     restart: unless-stopped
+
+networks:
+  pocketbase_internal:
