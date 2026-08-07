@@ -51,7 +51,7 @@ backend/
 ### Run PocketBase using Docker
 
 ```bash
-cd backend/pocketbase
+cd backend
 docker compose up -d
 ```
 
