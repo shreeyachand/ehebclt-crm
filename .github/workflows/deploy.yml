@@ -13,6 +13,30 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Frontend Dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Build Frontend
+        run: npm run build
+        working-directory: frontend
+        env:
+          VITE_PB_URL: ${{ secrets.VITE_PB_URL }}
+          VITE_PB_SUPERUSER_EMAIL: ${{ secrets.VITE_PB_SUPERUSER_EMAIL }}
+          VITE_PB_SUPERUSER_PASSWORD: ${{ secrets.VITE_PB_SUPERUSER_PASSWORD }}
+
+      - name: Stage Frontend Build into pb_public
+        run: |
+          mkdir -p backend/pb_public
+          cp -R frontend/dist/. backend/pb_public/
+
       - name: Deploy files to VM via SSH/rsync
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -20,10 +44,8 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          # 1. Point source paths to the backend/ folder
-          source: "backend/docker-compose.yml,backend/pb_migrations/,backend/pb_hooks/"
+          source: "backend/Dockerfile,backend/entrypoint.sh,backend/docker-compose.yml,backend/pb_migrations/,backend/pb_hooks/,backend/pb_public/"
           target: "/home/${{ secrets.REMOTE_USER }}/pocketbase/"
-          # 2. Strip "backend/" from the folder structure so they land flat
           strip_components: 1
 
       - name: Restart PocketBase Docker Container
@@ -35,7 +57,5 @@ jobs:
           port: 22
           script: |
             cd /home/${{ secrets.REMOTE_USER }}/pocketbase
-            # Pull new images (if any) and recreate/restart the container
-            sudo docker compose pull
-            sudo docker compose up -d --force-recreate
+            sudo docker compose up -d --build --force-recreate
             echo "PocketBase container successfully redeployed!"

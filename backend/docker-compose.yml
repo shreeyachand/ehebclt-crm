@@ -15,12 +15,13 @@ services:
       - ./pb_data:/pb_data
       - ./pb_migrations:/pb_migrations:ro
       - ./pb_hooks:/pb_hooks:ro
+      - ./pb_public:/pb_public:ro
     read_only: true
     security_opt:
       - no-new-privileges:true
     networks:
       - pocketbase_internal
-    command: serve --http=0.0.0.0:8090 --dir=/pb_data --migrationsDir=/pb_migrations --hooksDir=/pb_hooks
+    command: serve --http=0.0.0.0:8090 --dir=/pb_data --migrationsDir=/pb_migrations --hooksDir=/pb_hooks --publicDir=/pb_public
     restart: unless-stopped
 
 networks:
