@@ -45,7 +45,7 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          source: "backend/Dockerfile,backend/entrypoint.sh,backend/docker-compose.yml,backend/pb_migrations/,backend/pb_hooks/,backend/pb_public/"
+          source: "backend/Dockerfile,backend/entrypoint.sh,backend/docker-compose.yml,backend/Caddyfile,backend/pb_migrations/,backend/pb_hooks/,backend/pb_public/"
           target: "/home/${{ secrets.REMOTE_USER }}/pocketbase/"
           strip_components: 1
 

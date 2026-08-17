@@ -24,5 +24,25 @@ services:
     command: serve --http=0.0.0.0:8090 --dir=/pb_data --migrationsDir=/pb_migrations --hooksDir=/pb_hooks --publicDir=/pb_public
     restart: unless-stopped
 
+  caddy:
+    image: caddy:latest
+    container_name: caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - pocketbase_internal
+    depends_on:
+      - pocketbase
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:
+
 networks:
   pocketbase_internal:
