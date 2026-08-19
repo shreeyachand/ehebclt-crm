@@ -12,7 +12,7 @@ routerAdd("POST", "/api/_app_auth", function (e) {
   }
 
   return e.json(200, {
-    token: su.newStaticAuthToken(60 * time.Minute),
+    token: su.newStaticAuthToken(60 * 60 * 1000 * 1000 * 1000),
     record: su
   });
 });
