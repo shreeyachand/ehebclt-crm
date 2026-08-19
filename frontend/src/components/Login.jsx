@@ -13,7 +13,12 @@ export default function Login({ onLogin }) {
     try {
       await onLogin(email, password);
     } catch (err) {
-      setError("Invalid credentials. Please try again.");
+      const status = err?.status || err?.response?.status;
+      if (status === 401 || status === 400) {
+        setError("Invalid email or password.");
+      } else {
+        setError("Sign-in failed on the server. Please try again.");
+      }
       console.error("Login failed:", err);
     } finally {
       setBusy(false);
