@@ -9,7 +9,7 @@ services:
     cap_drop:
       - ALL
     ports:
-      - "8090:8090"
+      - "127.0.0.1:8090:8090"
     environment:
       PB_SUPERUSER_EMAIL: ${PB_SUPERUSER_EMAIL}
       PB_SUPERUSER_PASSWORD: ${PB_SUPERUSER_PASSWORD}
