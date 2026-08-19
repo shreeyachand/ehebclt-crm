@@ -1,6 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { useEffect, useState } from "react";
 import App from "./App";
+import Login from "./components/Login";
 import "./theme.css";
 
 import pb from "./pb";
@@ -8,25 +10,56 @@ import pb from "./pb";
 // Make pb visible in browser console for debugging
 window.pb = pb;
 
-// Log in as superuser so your frontend can access collections.
-// Credentials come from environment variables (see .env.example) so they
-// never end up committed to the repo.
-const superuserEmail = import.meta.env.VITE_PB_SUPERUSER_EMAIL;
-const superuserPassword = import.meta.env.VITE_PB_SUPERUSER_PASSWORD;
+async function mintSuperuserToken() {
+  const data = await pb.send("/api/_app_auth", { method: "POST" });
+  pb.authStore.save(data.token, data.record);
+}
 
-if (!superuserEmail || !superuserPassword) {
-  console.error(
-    "Missing VITE_PB_SUPERUSER_EMAIL / VITE_PB_SUPERUSER_PASSWORD. Copy .env.example to .env and fill in your credentials."
-  );
-} else {
-  pb.admins
-    .authWithPassword(superuserEmail, superuserPassword)
-    .then(() => console.log("Superuser logged in"))
-    .catch((err) => console.error("Failed to login:", err));
+function AuthGate() {
+  const [checking, setChecking] = useState(true);
+  const [authed, setAuthed] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        if (pb.authStore.isValid) {
+          const isUser = pb.authStore.model?.collectionName === "users";
+          if (isUser) await mintSuperuserToken();
+          setAuthed(true);
+        }
+      } catch (err) {
+        console.error("Bootstrap auth failed:", err);
+        pb.authStore.clear();
+      } finally {
+        setChecking(false);
+      }
+    })();
+  }, []);
+
+  const handleLogin = async (email, password) => {
+    await pb.collection("users").authWithPassword(email, password);
+    await mintSuperuserToken();
+    setAuthed(true);
+  };
+
+  const handleLogout = () => {
+    pb.authStore.clear();
+    setAuthed(false);
+  };
+
+  if (checking) {
+    return <div className="login-wrap">Loading…</div>;
+  }
+
+  if (!authed) {
+    return <Login onLogin={handleLogin} />;
+  }
+
+  return <App onLogout={handleLogout} />;
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <App />
+    <AuthGate />
   </React.StrictMode>
 );

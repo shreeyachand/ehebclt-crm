@@ -11,7 +11,7 @@ const NAV_ITEMS = [
   { key: "programs", label: "Programs", icon: "/icons/program.svg" },
 ];
 
-export default function App() {
+export default function App({ onLogout }) {
   const [tab, setTab] = useState("dashboard");
 
   const userName = pb.authStore.model?.name || pb.authStore.model?.email || "User";
@@ -51,6 +51,11 @@ export default function App() {
             <div className="user-name">{userName}</div>
             <div className="user-email">{userEmail}</div>
           </div>
+          {onLogout && (
+            <button className="logout-btn" onClick={onLogout}>
+              Log out
+            </button>
+          )}
         </div>
       </div>
 

@@ -1,5 +1,9 @@
 import PocketBase from 'pocketbase';
 
-const pb = new PocketBase('http://localhost:8090');
+const pbUrl =
+  import.meta.env.VITE_PB_URL ||
+  (import.meta.env.DEV ? 'http://localhost:8090' : window.location.origin);
+
+const pb = new PocketBase(pbUrl);
 
 export default pb;

@@ -1,0 +1,3 @@
+ehebclt.duckdns.org {
+    reverse_proxy pocketbase:8090
+}
