@@ -15,4 +15,4 @@ routerAdd("POST", "/api/_app_auth", function (e) {
     token: su.newStaticAuthToken(60 * 60 * 1000 * 1000 * 1000),
     record: su
   });
-});
+}, $apis.requireAuth("users"));
