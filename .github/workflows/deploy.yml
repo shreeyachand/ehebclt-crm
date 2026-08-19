@@ -30,8 +30,6 @@ jobs:
         working-directory: frontend
         env:
           VITE_PB_URL: ${{ secrets.VITE_PB_URL }}
-          VITE_PB_SUPERUSER_EMAIL: ${{ secrets.VITE_PB_SUPERUSER_EMAIL }}
-          VITE_PB_SUPERUSER_PASSWORD: ${{ secrets.VITE_PB_SUPERUSER_PASSWORD }}
 
       - name: Stage Frontend Build into pb_public
         run: |

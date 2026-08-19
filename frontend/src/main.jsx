@@ -8,25 +8,23 @@ import pb from "./pb";
 // Make pb visible in browser console for debugging
 window.pb = pb;
 
-// Log in as superuser so your frontend can access collections.
-// Credentials come from environment variables (see .env.example) so they
-// never end up committed to the repo.
-const superuserEmail = import.meta.env.VITE_PB_SUPERUSER_EMAIL;
-const superuserPassword = import.meta.env.VITE_PB_SUPERUSER_PASSWORD;
+// Bootstrap auth: ask the server (PocketBase hook) for a short-lived
+// superuser token. Credentials never enter the client bundle.
+async function boot() {
+  try {
+    const res = await fetch(pb.baseUrl + "/api/_app_auth", { method: "POST" });
+    if (!res.ok) throw new Error("auth failed: " + res.status);
+    const data = await res.json();
+    pb.authStore.save(data.token, data.record);
+  } catch (err) {
+    console.error("Bootstrap auth failed:", err);
+  }
 
-if (!superuserEmail || !superuserPassword) {
-  console.error(
-    "Missing VITE_PB_SUPERUSER_EMAIL / VITE_PB_SUPERUSER_PASSWORD. Copy .env.example to .env and fill in your credentials."
+  ReactDOM.createRoot(document.getElementById("root")).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
   );
-} else {
-  pb.admins
-    .authWithPassword(superuserEmail, superuserPassword)
-    .then(() => console.log("Superuser logged in"))
-    .catch((err) => console.error("Failed to login:", err));
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+boot();
