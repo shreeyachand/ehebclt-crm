@@ -2,3 +2,4 @@
 backend/pb_public/
 .DS_Store
 frontend/.env
+backend/.env

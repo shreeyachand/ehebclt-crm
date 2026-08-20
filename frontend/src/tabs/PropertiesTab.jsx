@@ -8,6 +8,7 @@ import pb from "../pb";
 const MAINTENANCE_FILLER = 0;
 
 const EMPTY_FORM = {
+  name: "",
   address: "",
   city: "",
   state: "",
@@ -26,6 +27,7 @@ export default function PropertiesTab() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
 
   async function load() {
     setLoading(true);
@@ -98,6 +100,7 @@ export default function PropertiesTab() {
   function openModal() {
     setForm(EMPTY_FORM);
     setFormError("");
+    setFieldErrors({});
     setShowModal(true);
   }
 
@@ -108,20 +111,46 @@ export default function PropertiesTab() {
 
   function updateField(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
+    // clear inline error while user retypes
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  }
+
+  function validateField(name, value) {
+    if (name === "city" && value.trim() && !/^[a-zA-Z\s]+$/.test(value.trim())) {
+      setFieldErrors((prev) => ({ ...prev, city: "Invalid input. Please use alphabetic characters only for city." }));
+    } else if (name === "zip" && value.trim()) {
+      if (!/^\d+$/.test(value.trim())) {
+        setFieldErrors((prev) => ({ ...prev, zip: "Invalid input. Please use numeric values for zip code." }));
+      } else if (value.trim().length !== 5) {
+        setFieldErrors((prev) => ({ ...prev, zip: "ZIP code must be 5 digits." }));
+      }
+    }
   }
 
   async function handleAddProperty(e) {
     e.preventDefault();
     setFormError("");
 
-    if (!form.address.trim() || !form.city.trim() || !form.state.trim() || !form.zip.trim()) {
-      setFormError("Address, city, state, and zip are required.");
+    if (!form.name.trim() || !form.address.trim() || !form.city.trim() || !form.state.trim() || !form.zip.trim()) {
+      setFormError("Name, address, city, state, and zip are required.");
+      return;
+    }
+
+    if (form.zip.trim().length !== 5) {
+      setFormError("ZIP code must be exactly 5 digits.");
       return;
     }
 
     setSaving(true);
     try {
       const payload = {
+        name: form.name.trim(),
         address: form.address.trim(),
         city: form.city.trim(),
         state: form.state.trim(),
@@ -216,9 +245,9 @@ export default function PropertiesTab() {
             {sorted.map((b) => (
               <tr key={b.id}>
                 <td>
-                  <div className="property-address">{b.address}</div>
+                  <div className="property-address">{b.name || b.address}</div>
                   <div className="property-citystate">
-                    {b.city}, {b.state} {b.zip}
+                    {b.address}, {b.city}, {b.state} {b.zip}
                   </div>
                 </td>
 
@@ -288,20 +317,30 @@ export default function PropertiesTab() {
             <form onSubmit={handleAddProperty}>
               <div className="form-grid">
                 <div className="form-field full">
-                  <label>Address *</label>
+                  <label>Name *</label>
                   <input
-                    value={form.address}
-                    onChange={(e) => updateField("address", e.target.value)}
+                    value={form.name}
+                    onChange={(e) => updateField("name", e.target.value)}
                     autoFocus
                   />
                 </div>
 
-                <div className="form-field">
+                <div className="form-field full">
+                  <label>Address *</label>
+                  <input
+                    value={form.address}
+                    onChange={(e) => updateField("address", e.target.value)}
+                  />
+                </div>
+
+                <div className={`form-field${fieldErrors.city ? " error" : ""}`}>
                   <label>City *</label>
                   <input
                     value={form.city}
                     onChange={(e) => updateField("city", e.target.value)}
+                    onBlur={(e) => validateField("city", e.target.value)}
                   />
+                  {fieldErrors.city && <div className="field-error">{fieldErrors.city}</div>}
                 </div>
 
                 <div className="form-field">
@@ -314,12 +353,14 @@ export default function PropertiesTab() {
                   />
                 </div>
 
-                <div className="form-field">
+                <div className={`form-field${fieldErrors.zip ? " error" : ""}`}>
                   <label>ZIP *</label>
                   <input
                     value={form.zip}
                     onChange={(e) => updateField("zip", e.target.value)}
+                    onBlur={(e) => validateField("zip", e.target.value)}
                   />
+                  {fieldErrors.zip && <div className="field-error">{fieldErrors.zip}</div>}
                 </div>
 
                 <div className="form-field">
