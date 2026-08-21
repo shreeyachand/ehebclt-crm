@@ -156,13 +156,14 @@ export default function ResidentsTab() {
   async function openModal() {
     setForm(EMPTY_FORM);
     setFormError("");
+    setBuildings([]);
+    setShowModal(true);
     try {
       const buildingRecords = await pb.collection("building").getFullList();
       setBuildings(buildingRecords);
     } catch {
       setBuildings([]);
     }
-    setShowModal(true);
   }
 
   function closeModal() {
