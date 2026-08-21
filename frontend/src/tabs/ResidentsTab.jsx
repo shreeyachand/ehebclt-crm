@@ -55,6 +55,7 @@ const EMPTY_FORM = {
   phone: "",
   dob: "",
   role: "leaseholder",
+  building_id: "",
 };
 
 export default function ResidentsTab() {
@@ -68,12 +69,13 @@ export default function ResidentsTab() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
+  const [buildings, setBuildings] = useState([]);
 
   async function load() {
     setLoading(true);
     const records = await pb.collection("tenant").getFullList({
       expand:
-        "lease_via_tenant_id.unit_id.building_id,lease_via_tenant_id.subsidy_via_lease_id,lease_via_tenant_id.income_certification_via_lease_id",
+        "building_id,lease_via_tenant_id.unit_id.building_id,lease_via_tenant_id.subsidy_via_lease_id,lease_via_tenant_id.income_certification_via_lease_id",
     });
 
     // Resolve the relevant lease + derived stats for each tenant once, up
@@ -81,7 +83,7 @@ export default function ResidentsTab() {
     records.forEach((t) => {
       const lease = pickLease(t);
       const unit = lease?.expand?.unit_id || null;
-      const building = unit?.expand?.building_id || null;
+      const building = unit?.expand?.building_id || t.expand?.building_id || null;
       const subsidies = lease?.expand?.subsidy_via_lease_id || [];
       const certs = lease?.expand?.income_certification_via_lease_id || [];
 
@@ -151,10 +153,17 @@ export default function ResidentsTab() {
     );
   }
 
-  function openModal() {
+  async function openModal() {
     setForm(EMPTY_FORM);
     setFormError("");
+    setBuildings([]);
     setShowModal(true);
+    try {
+      const buildingRecords = await pb.collection("building").getFullList();
+      setBuildings(buildingRecords);
+    } catch {
+      setBuildings([]);
+    }
   }
 
   function closeModal() {
@@ -177,6 +186,8 @@ export default function ResidentsTab() {
 
     setSaving(true);
     try {
+      const selectedBuildingId = form.building_id || null;
+
       const payload = {
         first_name: form.first_name.trim(),
         last_name: form.last_name.trim(),
@@ -184,6 +195,7 @@ export default function ResidentsTab() {
         phone: form.phone.trim() || null,
         dob: form.dob || null,
         role: form.role,
+        building_id: selectedBuildingId,
       };
 
       const created = await pb.collection("tenant").create(payload);
@@ -193,7 +205,7 @@ export default function ResidentsTab() {
       // refetch the whole list.
       created._lease = null;
       created._unit = null;
-      created._building = null;
+      created._building = buildings.find((b) => b.id === selectedBuildingId) || null;
       created.program_count = 0;
 
       setResidents((prev) => [created, ...prev]);
@@ -305,7 +317,7 @@ export default function ResidentsTab() {
                   </td>
 
                   <td>
-                    {building?.address || "N/A"}
+                    {building?.name || building?.address || "N/A"}
                     <br />
                     Unit {unit?.unit_number || "N/A"}
                   </td>
@@ -399,6 +411,21 @@ export default function ResidentsTab() {
                   >
                     <option value="leaseholder">Leaseholder</option>
                     <option value="co_signer">Co-signer</option>
+                  </select>
+                </div>
+
+                <div className="form-field">
+                  <label>Building</label>
+                  <select
+                    value={form.building_id}
+                    onChange={(e) => updateField("building_id", e.target.value)}
+                  >
+                    <option value="">-- Select a building --</option>
+                    {buildings.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name || b.address}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>

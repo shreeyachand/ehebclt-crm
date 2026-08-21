@@ -661,6 +661,17 @@ body {
   border-color: var(--green);
 }
 
+.form-field.error input,
+.form-field.error select {
+  border-color: #b91c1c;
+}
+
+.field-error {
+  color: #b91c1c;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
 .form-error {
   background: #fee2e2;
   color: #b91c1c;
