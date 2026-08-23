@@ -58,7 +58,7 @@ const EMPTY_FORM = {
   building_id: "",
 };
 
-export default function ResidentsTab() {
+export default function ResidentsTab({ onNavigate }) {
   const [residents, setResidents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -290,7 +290,11 @@ export default function ResidentsTab() {
               const building = t._building;
 
               return (
-                <tr key={t.id}>
+                <tr
+                  key={t.id}
+                  className="clickable-row"
+                  onClick={() => onNavigate?.("resident-detail", t.id)}
+                >
                   <td>
                     <div className="resident-cell">
                       <div
