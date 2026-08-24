@@ -69,6 +69,7 @@ export default function ResidentsTab({ onNavigate }) {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [buildings, setBuildings] = useState([]);
 
   async function load() {
@@ -156,6 +157,7 @@ export default function ResidentsTab({ onNavigate }) {
   async function openModal() {
     setForm(EMPTY_FORM);
     setFormError("");
+    setFieldErrors({});
     setBuildings([]);
     setShowModal(true);
     try {
@@ -173,6 +175,26 @@ export default function ResidentsTab({ onNavigate }) {
 
   function updateField(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  }
+
+  function validateField(name, value) {
+    if (name === "email" && value.trim()) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) {
+        setFieldErrors((prev) => ({ ...prev, email: "Invalid input. Please enter a valid email address." }));
+      }
+    } else if (name === "phone" && value.trim()) {
+      const digits = value.replace(/\D/g, "");
+      if (digits.length !== 10) {
+        setFieldErrors((prev) => ({ ...prev, phone: "Invalid input. Please enter a valid phone number." }));
+      }
+    }
   }
 
   async function handleAddResident(e) {
@@ -362,7 +384,7 @@ export default function ResidentsTab({ onNavigate }) {
 
             {formError && <div className="form-error">{formError}</div>}
 
-            <form onSubmit={handleAddResident}>
+            <form onSubmit={handleAddResident} noValidate>
               <div className="form-grid">
                 <div className="form-field">
                   <label>First name *</label>
@@ -381,21 +403,25 @@ export default function ResidentsTab({ onNavigate }) {
                   />
                 </div>
 
-                <div className="form-field">
+                <div className={`form-field${fieldErrors.email ? " error" : ""}`}>
                   <label>Email</label>
                   <input
-                    type="email"
+                    type="text"
                     value={form.email}
                     onChange={(e) => updateField("email", e.target.value)}
+                    onBlur={(e) => validateField("email", e.target.value)}
                   />
+                  {fieldErrors.email && <div className="field-error">{fieldErrors.email}</div>}
                 </div>
 
-                <div className="form-field">
+                <div className={`form-field${fieldErrors.phone ? " error" : ""}`}>
                   <label>Phone</label>
                   <input
                     value={form.phone}
                     onChange={(e) => updateField("phone", e.target.value)}
+                    onBlur={(e) => validateField("phone", e.target.value)}
                   />
+                  {fieldErrors.phone && <div className="field-error">{fieldErrors.phone}</div>}
                 </div>
 
                 <div className="form-field">

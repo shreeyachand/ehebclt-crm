@@ -80,6 +80,7 @@ export default function ResidentDetail({ residentId, onBack }) {
   const [form, setForm] = useState(EDIT_EMPTY);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
 
   useEffect(() => {
     let cancelled = false;
@@ -132,6 +133,7 @@ export default function ResidentDetail({ residentId, onBack }) {
       dob: resident.dob || "",
     });
     setFormError("");
+    setFieldErrors({});
     setShowEdit(true);
   }
 
@@ -142,6 +144,26 @@ export default function ResidentDetail({ residentId, onBack }) {
 
   function updateField(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  }
+
+  function validateField(name, value) {
+    if (name === "email" && value.trim()) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) {
+        setFieldErrors((prev) => ({ ...prev, email: "Invalid input. Please enter a valid email address." }));
+      }
+    } else if (name === "phone" && value.trim()) {
+      const digits = value.replace(/\D/g, "");
+      if (digits.length !== 10) {
+        setFieldErrors((prev) => ({ ...prev, phone: "Invalid input. Please enter a valid phone number." }));
+      }
+    }
   }
 
   async function handleEditSubmit(e) {
@@ -382,7 +404,7 @@ export default function ResidentDetail({ residentId, onBack }) {
 
             {formError && <div className="form-error">{formError}</div>}
 
-            <form onSubmit={handleEditSubmit}>
+            <form onSubmit={handleEditSubmit} noValidate>
               <div className="form-grid">
                 <div className="form-field">
                   <label>First name *</label>
@@ -401,21 +423,25 @@ export default function ResidentDetail({ residentId, onBack }) {
                   />
                 </div>
 
-                <div className="form-field full">
+                <div className={`form-field full${fieldErrors.email ? " error" : ""}`}>
                   <label>Email</label>
                   <input
-                    type="email"
+                    type="text"
                     value={form.email}
                     onChange={(e) => updateField("email", e.target.value)}
+                    onBlur={(e) => validateField("email", e.target.value)}
                   />
+                  {fieldErrors.email && <div className="field-error">{fieldErrors.email}</div>}
                 </div>
 
-                <div className="form-field full">
+                <div className={`form-field full${fieldErrors.phone ? " error" : ""}`}>
                   <label>Phone</label>
                   <input
                     value={form.phone}
                     onChange={(e) => updateField("phone", e.target.value)}
+                    onBlur={(e) => validateField("phone", e.target.value)}
                   />
+                  {fieldErrors.phone && <div className="field-error">{fieldErrors.phone}</div>}
                 </div>
 
                 <div className="form-field full">
