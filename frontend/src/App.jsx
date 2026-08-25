@@ -2,6 +2,7 @@ import { useState } from "react";
 import ResidentsTab from "./tabs/ResidentsTab";
 import DashboardTab from "./tabs/DashboardTab";
 import PropertiesTab from "./tabs/PropertiesTab";
+import ResidentDetail from "./tabs/ResidentDetail";
 import pb from "./pb";
 
 const NAV_ITEMS = [
@@ -13,6 +14,12 @@ const NAV_ITEMS = [
 
 export default function App({ onLogout }) {
   const [tab, setTab] = useState("dashboard");
+  const [selectedResidentId, setSelectedResidentId] = useState(null);
+
+  function navigateTo(page, id) {
+    setTab(page);
+    setSelectedResidentId(id || null);
+  }
 
   const userName = pb.authStore.model?.name || pb.authStore.model?.email || "User";
   const userEmail = pb.authStore.model?.email || "";
@@ -37,8 +44,12 @@ export default function App({ onLogout }) {
         {NAV_ITEMS.map((item) => (
           <a
             key={item.key}
-            className={`nav-item${tab === item.key ? " active" : ""}`}
-            onClick={() => setTab(item.key)}
+            className={`nav-item${
+              tab === item.key || (tab === "resident-detail" && item.key === "residents")
+                ? " active"
+                : ""
+            }`}
+            onClick={() => { setTab(item.key); setSelectedResidentId(null); }}
           >
             <img className="icon" src={item.icon} />
             {item.label}
@@ -66,7 +77,14 @@ export default function App({ onLogout }) {
 
         {tab === "properties" && <PropertiesTab />}
 
-        {tab === "residents" && <ResidentsTab />}
+        {tab === "residents" && <ResidentsTab onNavigate={navigateTo} />}
+
+        {tab === "resident-detail" && selectedResidentId && (
+          <ResidentDetail
+            residentId={selectedResidentId}
+            onBack={() => { setTab("residents"); setSelectedResidentId(null); }}
+          />
+        )}
       </div>
     </div>
   );
